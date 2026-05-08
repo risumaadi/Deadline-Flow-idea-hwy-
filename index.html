@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Deadline Flow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0A0A0F;
+    color: #F0F0FF;
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+  :root {
+    --accent: #7C5CFC;
+    --success: #22D3A3;
+    --warning: #F5A623;
+    --danger: #FF4D6D;
+    --card: #1A1A26;
+    --border: #252535;
+    --sub: #8888AA;
+  }
+
+  /* Header */
+  .header {
+    background: #12121A;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .theme-btn {
+    background: #7C5CFC22;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 12px;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  /* Nav */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: #12121A;
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 20px;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    color: var(--sub);
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.5;
+    transition: all 0.2s;
+  }
+  .nav-item.active { opacity: 1; color: var(--accent); }
+  .nav-icon { font-size: 22px; }
+
+  /* Content */
+  .content {
+    padding: 16px 16px 100px;
+    transition: opacity 0.2s;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 16px 0 10px;
+  }
+
+  /* Stats */
+  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    flex: 1;
+    border-radius: 16px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid;
+  }
+  .stat-num { font-size: 26px; font-weight: 800; }
+  .stat-label { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+  /* Badge */
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  /* Progress */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s;
+  }
+
+  /* Task Card */
+  .task-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .task-card.done { opacity: 0.5; }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .checkbox.checked {
+    background: var(--success);
+    border-color: var(--success);
+  }
+  .task-info { flex: 1; }
+  .task-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  .task-title.done-text { text-decoration: line-through; color: var(--sub); }
+  .task-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .task-actions { display: flex; gap: 6px; }
+  .action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px;
+  }
+  .countdown {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+  }
+  .urgent { background: #FF4D6D22; color: #FF4D6D; border: 1px solid #FF4D6D44; }
+  .normal { background: #F5A62322; color: #F5A623; border: 1px solid #F5A62344; }
+  .safe { background: #22D3A322; color: #22D3A3; border: 1px solid #22D3A344; }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 78px;
+    right: calc(50% - 200px);
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    border: none;
+    border-radius: 20px;
+    padding: 13px 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px #7C5CFC44;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000A;
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #12121A;
+    border-radius: 24px 24px 0 0;
+    padding: 24px;
+    width: 100%;
+    max-width: 430px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .close-btn {
+    background: #7C5CFC22;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 10px;
+    color: var(--sub);
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sub);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .form-input {
+    background: #7C5CFC15;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 14px;
+    color: #F0F0FF;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+  .primary-btn {
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    border: none;
+    border-radius: 14px;
+    padding: 13px;
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  /* Pomo */
+  .pomo-ring { display: block; margin: 0 auto 20px; }
+  .pomo-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+  .pomo-btn {
+    padding: 6px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--sub);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .pomo-btn.active { border-color: var(--accent); background: #7C5CFC22; color: var(--accent); }
+  .pomo-start {
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    border: none;
+    border-radius: 14px;
+    padding: 12px 28px;
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .pomo-reset {
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--sub);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .sessions-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .session-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #7C5CFC15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .session-dot.done-session {
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    border-color: var(--accent);
+  }
+
+  /* Weekly chart */
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.6s;
+  }
+  .bar-label { font-size: 9px; color: var(--sub); }
+
+  /* Auth */
+  .auth-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px;
+  }
+  .auth-logo { font-size: 52px; margin-bottom: 8px; text-align: center; }
+  .auth-title {
+    font-size: 30px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .auth-sub { color: var(--sub); font-size: 14px; margin-bottom: 36px; text-align: center; }
+  .auth-tabs {
+    display: flex;
+    background: #7C5CFC22;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    background: transparent;
+    color: var(--sub);
+    transition: all 0.2s;
+  }
+  .auth-tab.active { background: var(--accent); color: white; }
+  .guest-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    color: var(--sub);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Calendar */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-label { text-align: center; font-size: 11px; font-weight: 700; color: var(--sub); padding: 4px 0; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+  }
+  .cal-day.today { background: var(--accent); font-weight: 800; color: white; }
+  .cal-day.has-task { border: 1px solid #7C5CFC44; background: #7C5CFC15; }
+  .cal-dot {
+    position: absolute;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Profile */
+  .profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7C5CFC, #38BDF8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 12px;
+  }
+  .toggle-track {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    background: var(--border);
+    position: relative;
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s;
+  }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: left 0.3s;
+    box-shadow: 0 1px 4px #0004;
+  }
+  .toggle-track.on .toggle-thumb { left: 27px; }
+  .signout-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid #FF4D6D44;
+    background: #FF4D6D12;
+    color: #FF4D6D;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  /* Light mode */
+  body.light {
+    background: #F4F4FA;
+    color: #1A1A2E;
+    --accent: #6B46FA;
+    --card: #FFFFFF;
+    --border: #E5E5F0;
+    --sub: #666688;
+  }
+  body.light .header,
+  body.light .nav,
+  body.light .modal { background: #FFFFFF; }
+  body.light .form-input { color: #1A1A2E; }
+
+  /* Quote */
+  .quote-card {
+    background: linear-gradient(135deg, #7C5CFC22, #38BDF811);
+    border: 1px solid #7C5CFC44;
+    border-radius: 18px;
+    padding: 16px;
+    margin-top: 4px;
+  }
+  .quote-text { font-size: 14px; font-style: italic; line-height: 1.6; }
+  .quote-author { font-size: 11px; color: var(--sub); margin-top: 8px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-logo">⚡</div>
+  <div class="auth-title">Deadline Flow</div>
+  <div class="auth-sub">Master your time. Beat every deadline.</div>
+  <div style="width:100%;max-width:380px">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="setAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="setAuthTab('signup')">Sign Up</button>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="you@example.com" id="auth-email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="••••••••" id="auth-pass">
+      </div>
+      <button class="primary-btn" onclick="login()">Sign In</button>
+      <button class="guest-btn" onclick="login()">Continue as Guest</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none">
+  <div class="header">
+    <div class="logo">⚡ Deadline Flow</div>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-icon">🌙</button>
+  </div>
+
+  <div class="content">
+    <!-- DASHBOARD -->
+    <div id="screen-dashboard" class="screen active">
+      <div style="margin-bottom:20px">
+        <div style="font-size:22px;font-weight:800">Good morning! 👋</div>
+        <div style="color:var(--sub);font-size:14px;margin-top:2px" id="pending-msg">Loading tasks...</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card" style="background:#22D3A312;border-color:#22D3A330">
+          <div class="stat-num" style="color:#22D3A3" id="stat-done">0</div>
+          <div class="stat-label">Done</div>
+        </div>
+        <div class="stat-card" style="background:#F5A62312;border-color:#F5A62330">
+          <div class="stat-num" style="color:#F5A623" id="stat-pending">0</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card" style="background:#7C5CFC12;border-color:#7C5CFC30">
+          <div class="stat-num" style="color:#7C5CFC" id="stat-score">0%</div>
+          <div class="stat-label">Score</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Weekly Performance</div>
+        <div class="chart" id="week-chart"></div>
+      </div>
+      <div class="section-title">Urgent Deadlines</div>
+      <div id="urgent-list"></div>
+      <div class="quote-card" id="quote-card">
+        <div style="font-size:16px;margin-bottom:6px">💬</div>
+        <div class="quote-text" id="quote-text"></div>
+        <div class="quote-author" id="quote-author"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="screen-tasks" class="screen">
+      <div style="font-size:22px;font-weight:800;margin-bottom:14px">My Tasks</div>
+      <input class="form-input" placeholder="🔍 Search tasks..." id="search-input"
+        oninput="renderTasks()" style="margin-bottom:12px">
+      <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px" id="filter-row"></div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- FOCUS -->
+    <div id="screen-focus" class="screen">
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">Focus Mode</div>
+      <div style="color:var(--sub);font-size:14px;margin-bottom:20px">Pomodoro • Stay in the zone</div>
+      <div class="card" style="text-align:center;padding:28px 16px">
+        <svg class="pomo-ring" width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="75" fill="none" stroke="#252535" stroke-width="10"/>
+          <circle id="pomo-arc" cx="90" cy="90" r="75" fill="none" stroke="#7C5CFC"
+            stroke-width="10" stroke-linecap="round" transform="rotate(-90 90 90)"
+            stroke-dasharray="0 471"/>
+          <text id="pomo-time" x="90" y="82" text-anchor="middle" fill="#F0F0FF"
+            font-size="32" font-weight="800">25:00</text>
+          <text id="pomo-status" x="90" y="104" text-anchor="middle" fill="#8888AA"
+            font-size="12">Ready</text>
+        </svg>
+        <div class="pomo-controls">
+          <button class="pomo-btn active" onclick="setPomoMin(15)">15m</button>
+          <button class="pomo-btn active" onclick="setPomoMin(25)" id="pomo-25">25m</button>
+          <button class="pomo-btn" onclick="setPomoMin(50)">50m</button>
+        </div>
+        <div style="display:flex;justify-content:center;gap:10px">
+          <button class="pomo-start" id="pomo-start-btn" onclick="togglePomo()">Start Focus</button>
+          <button class="pomo-reset" onclick="resetPomo()">Reset</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Today's Sessions</div>
+        <div class="sessions-grid" id="sessions-grid"></div>
+        <div style="color:var(--sub);font-size:12px;margin-top:10px" id="sessions-count">0 sessions completed</div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#22D3A315,#38BDF810)">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">⚡ Focus Tips</div>
+        <div style="color:var(--sub);font-size:13px;line-height:1.9">
+          • Put your phone on silent<br>
+          • Close unnecessary tabs<br>
+          • Hydrate before starting<br>
+          • Set clear micro-goals
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="screen-calendar" class="screen">
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">Calendar</div>
+      <div style="color:var(--sub);font-size:14px;margin-bottom:16px" id="cal-month"></div>
+      <div class="card">
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="section-title">Deadlines This Month</div>
+      <div id="cal-task-list"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="screen-profile" class="screen">
+      <div style="font-size:22px;font-weight:800;margin-bottom:16px">Profile</div>
+      <div class="card" style="text-align:center;padding:24px 16px">
+        <div class="profile-avatar">⚡</div>
+        <div style="font-weight:800;font-size:18px">Flow User</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Productivity Achiever</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:14px">
+          <div><div style="font-weight:800;font-size:22px;color:#7C5CFC" id="p-done">0</div><div style="font-size:11px;color:var(--sub)">Done</div></div>
+          <div><div style="font-weight:800;font-size:22px;color:#F5A623">🔥5</div><div style="font-size:11px;color:var(--sub)">Streak</div></div>
+          <div><div style="font-weight:800;font-size:22px;color:#22D3A3" id="p-score">0%</div><div style="font-size:11px;color:var(--sub)">Score</div></div>
+        </div>
+      </div>
+      <div class="section-title">Appearance</div>
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600">Dark Mode</div>
+          <div style="font-size:12px;color:var(--sub)">Switch theme</div>
+        </div>
+        <button class="toggle-track on" id="dark-toggle" onclick="toggleTheme()">
+          <div class="toggle-thumb"></div>
+        </button>
+      </div>
+      <div class="section-title">My Stats</div>
+      <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#22D3A322;display:flex;align-items:center;justify-content:center;font-size:20px">🏆</div>
+        <div style="flex:1;font-weight:600;font-size:14px">Tasks Completed</div>
+        <div style="font-weight:800;font-size:18px;color:#22D3A3" id="p-stat-done">0</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#7C5CFC22;display:flex;align-items:center;justify-content:center;font-size:20px">🎯</div>
+        <div style="flex:1;font-weight:600;font-size:14px">Total Tasks</div>
+        <div style="font-weight:800;font-size:18px;color:#7C5CFC" id="p-stat-total">0</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#38BDF822;display:flex;align-items:center;justify-content:center;font-size:20px">⏱️</div>
+        <div style="flex:1;font-weight:600;font-size:14px">Focus Sessions</div>
+        <div style="font-weight:800;font-size:18px;color:#38BDF8" id="p-stat-pomo">0</div>
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab-btn" onclick="openModal()">➕ Add Task</button>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('tasks')" id="nav-tasks">
+      <span class="nav-icon">✅</span><span>Tasks</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('focus')" id="nav-focus">
+      <span class="nav-icon">⏱️</span><span>Focus</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('calendar')" id="nav-calendar">
+      <span class="nav-icon">📅</span><span>Calendar</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('profile')" id="nav-profile">
+      <span class="nav-icon">👤</span><span>Profile</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-title-text">New Task</span>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Task Title *</label>
+      <input class="form-input" id="task-title" placeholder="What needs to be done?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" id="task-desc" placeholder="Optional details..." rows="3" style="resize:none"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="task-cat">
+          <option>Work</option><option>Study</option><option>Personal</option>
+          <option>Business</option><option>Fitness</option><option>Custom</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-input" id="task-priority">
+          <option value="low">Low</option><option value="medium" selected>Medium</option>
+          <option value="high">High</option><option value="critical">Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Deadline</label>
+      <input class="form-input" type="datetime-local" id="task-deadline">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Progress: <span id="progress-val">0</span>%</label>
+      <input type="range" min="0" max="100" value="0" id="task-progress"
+        oninput="document.getElementById('progress-val').textContent=this.value"
+        style="width:100%;accent-color:#7C5CFC">
+    </div>
+    <button class="primary-btn" onclick="saveTask()">Create Task</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let tasks = JSON.parse(localStorage.getItem('df-tasks') || '[]');
+let editId = null;
+let isDark = true;
+let currentTab = 'dashboard';
+let pomoLeft = 25 * 60, pomoDuration = 25 * 60, pomoRunning = false, pomoSessions = 0, pomoInterval = null;
+let quoteIdx = 0;
+
+const quotes = [
+  { text: "Work expands to fill the time available — so set tight deadlines.", author: "Parkinson's Law" },
+  { text: "A goal without a deadline is just a dream.", author: "Napoleon Hill" },
+  { text: "The secret to getting ahead is getting started.", author: "Mark Twain" },
+  { text: "Either you run the day or the day runs you.", author: "Jim Rohn" },
+  { text: "Productivity is never an accident. It is the result of commitment.", author: "Paul J. Meyer" },
+];
+
+const catColors = { Work:'#7C5CFC', Study:'#38BDF8', Personal:'#22D3A3', Business:'#F5A623', Fitness:'#FF4D6D', Custom:'#A78BFA' };
+const priorityColors = { low:'#22D3A3', medium:'#F5A623', high:'#FF8C42', critical:'#FF4D6D' };
+
+// Sample tasks if empty
+if (tasks.length === 0) {
+  tasks = [
+    { id: 1, title: 'Submit Q3 Report', desc: 'Quarterly analysis', category: 'Work', priority: 'critical', deadline: new Date(Date.now() + 2*3600000).toISOString(), progress: 75, done: false },
+    { id: 2, title: 'Study Algorithm Ch.5', desc: 'Dynamic programming', category: 'Study', priority: 'high', deadline: new Date(Date.now() + 5*3600000).toISOString(), progress: 40, done: false },
+    { id: 3, title: 'Morning Run 5km', desc: 'Track session', category: 'Fitness', priority: 'medium', deadline: new Date(Date.now() + 8*3600000).toISOString(), progress: 100, done: true },
+    { id: 4, title: 'Client Proposal', desc: 'Marketing campaign', category: 'Business', priority: 'high', deadline: new Date(Date.now() + 24*3600000).toISOString(), progress: 20, done: false },
+    { id: 5, title: 'Read 30 Pages', desc: 'Atomic Habits', category: 'Personal', priority: 'low', deadline: new Date(Date.now() + 48*3600000).toISOString(), progress: 60, done: false },
+  ];
+  saveTasks();
+}
+
+function saveTasks() { localStorage.setItem('df-tasks', JSON.stringify(tasks)); }
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function setAuthTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0&&t==='login')||(i===1&&t==='signup')));
+}
+function login() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  renderAll();
+  startQuoteRotation();
+  updateCountdowns();
+  setInterval(updateCountdowns, 30000);
+}
+function signOut() {
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+  const tog = document.getElementById('dark-toggle');
+  tog.classList.toggle('on', isDark);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  const fab = document.getElementById('fab-btn');
+  fab.style.display = (tab === 'dashboard' || tab === 'tasks') ? 'flex' : 'none';
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'tasks') renderTasks();
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'profile') renderProfile();
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────────────────────
+function getCountdown(deadline) {
+  const diff = new Date(deadline) - Date.now();
+  if (diff <= 0) return { text: '⚠️ Overdue', cls: 'urgent' };
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h < 1) return { text: m + 'm left', cls: 'urgent' };
+  if (h < 4) return { text: h + 'h ' + m + 'm left', cls: 'urgent' };
+  if (h < 24) return { text: h + 'h ' + m + 'm left', cls: 'normal' };
+  return { text: Math.floor(h/24) + 'd ' + (h%24) + 'h left', cls: 'safe' };
+}
+
+function updateCountdowns() { renderDashboard(); renderTasks(); }
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const done = tasks.filter(t => t.done).length;
+  const pending = tasks.filter(t => !t.done).length;
+  const score = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-score').textContent = score + '%';
+  document.getElementById('pending-msg').textContent = `You have ${pending} tasks pending today`;
+
+  // Weekly chart
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
+  const vals = [65,72,80,58,90,85,score];
+  document.getElementById('week-chart').innerHTML = days.map((d,i) =>
+    `<div class="bar-wrap">
+      <div class="bar" style="height:${vals[i]}%;background:${i===6?'linear-gradient(180deg,#7C5CFC,#38BDF8)':'#7C5CFC22'};border:${i===6?'1px solid #7C5CFC44':'none'}"></div>
+      <div class="bar-label">${d}</div>
+    </div>`).join('');
+
+  // Urgent
+  const urgent = tasks.filter(t=>!t.done).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)).slice(0,3);
+  document.getElementById('urgent-list').innerHTML = urgent.map(t => {
+    const cd = getCountdown(t.deadline);
+    const pc = priorityColors[t.priority];
+    return `<div class="card" style="border-left:3px solid ${pc};padding-left:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-weight:700;font-size:14px">${t.title}</div>
+        <div style="color:var(--sub);font-size:12px;margin-top:2px">${t.category}</div></div>
+        <span class="countdown ${cd.cls}">${cd.text}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${t.progress}%;background:${pc}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Quote
+  const q = quotes[quoteIdx];
+  document.getElementById('quote-text').textContent = q.text;
+  document.getElementById('quote-author').textContent = '— ' + q.author;
+}
+
+function startQuoteRotation() {
+  setInterval(() => { quoteIdx = (quoteIdx + 1) % quotes.length; renderDashboard(); }, 8000);
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+function renderTasks() {
+  // Filter buttons
+  const filters = ['all','critical','high','medium','low'];
+  document.getElementById('filter-row').innerHTML = filters.map(f =>
+    `<button onclick="setFilter('${f}')" style="flex-shrink:0;padding:5px 12px;border-radius:10px;border:1px solid ${activeFilter===f?'#7C5CFC':'var(--border)'};background:${activeFilter===f?'#7C5CFC22':'transparent'};color:${activeFilter===f?'#7C5CFC':'var(--sub)'};font-size:12px;font-weight:600;cursor:pointer;text-transform:capitalize">${f}</button>`
+  ).join('');
+
+  const q = (document.getElementById('search-input')?.value||'').toLowerCase();
+  const filtered = tasks.filter(t =>
+    t.title.toLowerCase().includes(q) &&
+    (activeFilter === 'all' || t.priority === activeFilter)
+  );
+
+  if (filtered.length === 0) {
+    document.getElementById('task-list').innerHTML = '<div style="text-align:center;color:var(--sub);margin-top:40px;font-size:14px">No tasks found</div>';
+    return;
+  }
+
+  document.getElementById('task-list').innerHTML = filtered.map(t => {
+    const cd = getCountdown(t.deadline);
+    const pc = priorityColors[t.priority];
+    const cc = catColors[t.category] || '#7C5CFC';
+    return `<div class="task-card ${t.done?'done':''}">
+      <button class="checkbox ${t.done?'checked':''}" onclick="toggleDone(${t.id})">${t.done?'✓':''}</button>
+      <div class="task-info">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="task-title ${t.done?'done-text':''}">${t.title}</div>
+          <div class="task-actions">
+            <button class="action-btn" onclick="editTask(${t.id})">✏️</button>
+            <button class="action-btn" onclick="deleteTask(${t.id})">🗑️</button>
+          </div>
+        </div>
+        <div class="task-badges">
+          <span class="badge" style="background:${cc}22;color:${cc};border:1px solid ${cc}44">${t.category}</span>
+          <span class="badge" style="background:${pc}22;color:${pc};border:1px solid ${pc}44">${t.priority}</span>
+          <span class="countdown ${cd.cls}">${cd.text}</span>
+        </div>
+        ${t.desc ? `<div style="color:var(--sub);font-size:12px;margin-top:4px">${t.desc}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${t.progress}%;background:${pc}"></div></div>
+          <span style="font-size:11px;color:var(--sub);font-weight:600">${t.progress}%</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f) { activeFilter = f; renderTasks(); }
+function toggleDone(id) {
+  const t = tasks.find(t=>t.id===id);
+  if (t) { t.done = !t.done; if(t.done) t.progress=100; saveTasks(); renderAll(); }
+}
+function deleteTask(id) {
+  tasks = tasks.filter(t=>t.id!==id); saveTasks(); renderAll();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal() {
+  editId = null;
+  document.getElementById('modal-title-text').textContent = 'New Task';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-cat').value = 'Work';
+  document.getElementById('task-priority').value = 'medium';
+  document.getElementById('task-deadline').value = '';
+  document.getElementById('task-progress').value = 0;
+  document.getElementById('progress-val').textContent = '0';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function editTask(id) {
+  const t = tasks.find(t=>t.id===id);
+  if (!t) return;
+  editId = id;
+  document.getElementById('modal-title-text').textContent = 'Edit Task';
+  document.getElementById('task-title').value = t.title;
+  document.getElementById('task-desc').value = t.desc||'';
+  document.getElementById('task-cat').value = t.category;
+  document.getElementById('task-priority').value = t.priority;
+  document.getElementById('task-progress').value = t.progress;
+  document.getElementById('progress-val').textContent = t.progress;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function saveTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { alert('Please enter a task title'); return; }
+  const dl = document.getElementById('task-deadline').value;
+  const task = {
+    title,
+    desc: document.getElementById('task-desc').value,
+    category: document.getElementById('task-cat').value,
+    priority: document.getElementById('task-priority').value,
+    deadline: dl ? new Date(dl).toISOString() : new Date(Date.now()+24*3600000).toISOString(),
+    progress: parseInt(document.getElementById('task-progress').value),
+    done: false,
+  };
+  if (editId) {
+    const idx = tasks.findIndex(t=>t.id===editId);
+    tasks[idx] = { ...tasks[idx], ...task };
+  } else {
+    tasks.push({ ...task, id: Date.now() });
+  }
+  saveTasks(); closeModal(); renderAll();
+}
+
+// ── POMODORO ──────────────────────────────────────────────────────────────────
+function setPomoMin(m) {
+  pomoDuration = m * 60; pomoLeft = pomoDuration;
+  pomoRunning = false; clearInterval(pomoInterval);
+  updatePomoUI();
+  document.querySelectorAll('.pomo-btn').forEach(b=>b.classList.remove('active'));
+}
+function togglePomo() {
+  pomoRunning = !pomoRunning;
+  if (pomoRunning) {
+    document.getElementById('pomo-start-btn').textContent = 'Pause';
+    document.getElementById('pomo-status').textContent = 'Focus';
+    pomoInterval = setInterval(() => {
+      pomoLeft--;
+      if (pomoLeft <= 0) {
+        pomoLeft = pomoDuration; pomoRunning = false;
+        pomoSessions++; clearInterval(pomoInterval);
+        document.getElementById('pomo-start-btn').textContent = 'Start Focus';
+        document.getElementById('pomo-status').textContent = 'Done! 🎉';
+        renderSessions();
+      }
+      updatePomoUI();
+    }, 1000);
+  } else {
+    clearInterval(pomoInterval);
+    document.getElementById('pomo-start-btn').textContent = 'Start Focus';
+    document.getElementById('pomo-status').textContent = 'Paused';
+  }
+}
+function resetPomo() {
+  pomoRunning = false; clearInterval(pomoInterval);
+  pomoLeft = pomoDuration;
+  document.getElementById('pomo-start-btn').textContent = 'Start Focus';
+  document.getElementById('pomo-status').textContent = 'Ready';
+  updatePomoUI();
+}
+function updatePomoUI() {
+  const m = String(Math.floor(pomoLeft/60)).padStart(2,'0');
+  const s = String(pomoLeft%60).padStart(2,'0');
+  document.getElementById('pomo-time').textContent = m+':'+s;
+  const pct = 1 - pomoLeft/pomoDuration;
+  const circ = 2*Math.PI*75;
+  document.getElementById('pomo-arc').setAttribute('stroke-dasharray', `${circ*pct} ${circ}`);
+}
+function renderSessions() {
+  document.getElementById('sessions-grid').innerHTML =
+    Array.from({length:8},(_,i)=>`<div class="session-dot ${i<pomoSessions?'done-session':''}">${i<pomoSessions?'⚡':''}</div>`).join('');
+  document.getElementById('sessions-count').textContent = pomoSessions + ' session' + (pomoSessions!==1?'s':'') + ' completed today';
+  document.getElementById('p-stat-pomo').textContent = pomoSessions;
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+function renderCalendar() {
+  const now = new Date();
+  document.getElementById('cal-month').textContent = now.toLocaleString('default',{month:'long',year:'numeric'});
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const taskDays = new Set(tasks.map(t => new Date(t.deadline).getDate()));
+  let html = ['S','M','T','W','T','F','S'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  html += Array(firstDay).fill('<div></div>').join('');
+  for (let d=1; d<=daysInMonth; d++) {
+    const isToday = d === now.getDate();
+    const hasTask = taskDays.has(d);
+    html += `<div class="cal-day ${isToday?'today':''} ${hasTask&&!isToday?'has-task':''}">
+      ${d}${hasTask&&!isToday?'<div class="cal-dot"></div>':''}
+    </div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+  document.getElementById('cal-task-list').innerHTML = tasks
+    .sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))
+    .map(t => {
+      const d = new Date(t.deadline);
+      const pc = priorityColors[t.priority];
+      return `<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:${pc}22;border:1px solid ${pc}44;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:14px;font-weight:800;color:${pc}">${d.getDate()}</span>
+          <span style="font-size:9px;color:${pc}">${d.toLocaleString('default',{month:'short'})}</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px;${t.done?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
+          <div style="color:var(--sub);font-size:12px">${t.category} • ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <span class="badge" style="background:${pc}22;color:${pc};border:1px solid ${pc}44">${t.priority}</span>
+      </div>`;
+    }).join('');
+}
+
+// ── PROFILE ───────────────────────────────────────────────────────────────────
+function renderProfile() {
+  const done = tasks.filter(t=>t.done).length;
+  const score = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  document.getElementById('p-done').textContent = done;
+  document.getElementById('p-score').textContent = score+'%';
+  document.getElementById('p-stat-done').textContent = done;
+  document.getElementById('p-stat-total').textContent = tasks.length;
+  document.getElementById('p-stat-pomo').textContent = pomoSessions;
+}
+
+function renderAll() {
+  renderDashboard(); renderTasks(); renderProfile(); renderSessions();
+}
+</script>
+</body>
+</html>
