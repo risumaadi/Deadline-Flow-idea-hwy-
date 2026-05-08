@@ -1,2 +1,2 @@
-# Deadline-Flow-idea-hwy-
-Productivity app
+# ⚡ Deadline Flow
+Productivity app - Beat every deadline!
