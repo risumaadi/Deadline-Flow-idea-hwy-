@@ -2,20 +2,29 @@
   "name": "Deadline Flow",
   "short_name": "DeadlineFlow",
   "description": "Master your time. Beat every deadline.",
-  "start_url": "/DeadlineFlow/",
+  "start_url": "/Deadline-Flow-idea-hwy-/",
+  "id": "/Deadline-Flow-idea-hwy-/",
   "display": "standalone",
   "background_color": "#0A0A0F",
   "theme_color": "#7C5CFC",
   "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "https://risumaadi.github.io/Deadline-Flow-idea-hwy-/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/7C5CFC/FFFFFF?text=DF",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://via.placeholder.com/512x512/7C5CFC/FFFFFF?text=DF",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
