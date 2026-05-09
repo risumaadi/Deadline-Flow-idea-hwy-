@@ -1,6 +1,6 @@
 {
   "name": "Deadline Flow",
-  "short_name": "DeadlineFlow", 
+  "short_name": "DeadlineFlow",
   "description": "Master your time. Beat every deadline.",
   "start_url": "/Deadline-Flow-idea-hwy-/",
   "id": "/Deadline-Flow-idea-hwy-/",
@@ -8,7 +8,10 @@
   "background_color": "#0A0A0F",
   "theme_color": "#7C5CFC",
   "orientation": "portrait",
-  "categories": ["productivity", "utilities"],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "icon.svg",
