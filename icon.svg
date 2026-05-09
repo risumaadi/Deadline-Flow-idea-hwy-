@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="100" fill="#7C5CFC"/>
-  <text x="256" y="320" font-size="280" text-anchor="middle" fill="white" font-family="Arial" font-weight="bold">⚡</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#7C5CFC"/>
+  <rect x="40" y="40" width="432" height="432" rx="60" fill="#6B46FA"/>
+  <polygon points="280,80 160,280 240,280 200,440 360,220 270,220 320,80" fill="#FFD700"/>
+  <text x="256" y="480" font-size="40" text-anchor="middle" fill="#ffffff88" font-family="Arial">DEADLINE FLOW</text>
 </svg>
